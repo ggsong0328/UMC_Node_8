@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import cors from "cors";
 import express from "express"; // -> ES Module
+import { handleUserSignUp } from "./controllers/user.controller.js";
 
 dotenv.config();
 
