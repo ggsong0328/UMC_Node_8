@@ -1,4 +1,4 @@
-import { responseFromUser } from "../dtos/user.dto.js";
+import { responseFromUser, responseFromUserMission } from "../dtos/user.dto.js";
 import {
   addUser,
   getUser,
@@ -6,6 +6,8 @@ import {
   setAgreedTerms,
   getUserPreferredFoodsByUserId,
   setPreferredFoods,
+  addUserMission,
+  getUserMission,
 } from "../repositories/user.repository.js";
 
 export const userSignUp = async (data) => {
@@ -36,4 +38,20 @@ export const userSignUp = async (data) => {
   const foods = await getUserPreferredFoodsByUserId(joinUserId);
 
   return responseFromUser({ user, terms, foods });
+};
+
+export const addNewUserMission = async (data) => {
+  console.log(data.memberId, data.missionId);
+  const joinUserMissionId = await addUserMission({
+    memberId: data.memberId,
+    missionId: data.missionId,
+  });
+
+  if (joinUserMissionId === null) {
+    throw new Error("이미 도전중인 미션입니다.");
+  }
+
+  const userMission = await getUserMission(joinUserMissionId);
+
+  return responseFromUserMission({ userMission });
 };

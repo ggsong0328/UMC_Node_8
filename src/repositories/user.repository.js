@@ -143,3 +143,53 @@ export const getUserPreferredFoodsByUserId = async (userId) => {
     conn.release();
   }
 };
+
+// 도전중인 미션 추가
+export const addUserMission = async (data) => {
+  const conn = await pool.getConnection();
+
+  try {
+    const [confirm] = await pool.query(
+      `SELECT EXISTS(SELECT 1 FROM member_mission WHERE member_id = ? AND mission_id = ?) as isExistProceedingMission;`,
+      [data.memberId, data.missionId]
+    );
+
+    if (confirm[0].isExistProceedingMission) {
+      return null;
+    }
+
+    const [result] = await pool.query(
+      `INSERT INTO member_mission (member_id, mission_id, status) VALUES (?, ?, 'ing');`,
+      [data.memberId, data.missionId]
+    );
+    return result.insertId;
+  } catch (err) {
+    throw new Error(
+      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
+    );
+  } finally {
+    conn.release();
+  }
+};
+
+// 도전 중인 미션 정보 얻기
+export const getUserMission = async (memberMissionId) => {
+  const conn = await pool.getConnection();
+
+  try {
+    const [userMission] = await pool.query(
+      "SELECT mm.id, s.name AS Store_Name, m.body AS Mission_Body " +
+        "FROM member_mission mm join mission m on mm.mission_id = m.id join store s on m.store_id = s.id " +
+        "WHERE mm.id = ?",
+      memberMissionId
+    );
+
+    return userMission;
+  } catch (err) {
+    throw new Error(
+      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
+    );
+  } finally {
+    conn.release();
+  }
+};

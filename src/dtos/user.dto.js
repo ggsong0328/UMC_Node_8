@@ -29,3 +29,15 @@ export const responseFromUser = ({ user, terms, foods }) => {
     preferredFoods: foods,
   };
 };
+
+export const bodyToUserMission = (memberId, missionId, body) => {
+  //console.log(memberId, missionId);
+  return {
+    memberId,
+    missionId,
+  };
+};
+
+export const responseFromUserMission = (body) => {
+  return body;
+};
