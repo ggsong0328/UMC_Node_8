@@ -15,18 +15,15 @@ export const bodyToUser = (body) => {
 };
 
 export const responseFromUser = ({ user, terms, foods }) => {
-  const birth = new Date(user.birth);
+  const agreedTerms = terms.map((term) => term.terms.title);
+
+  const preferFoods = foods.map((food) => food.foodCategory.name);
 
   return {
-    name: user.name,
     email: user.email,
-    gender: user.gender,
-    birth,
-    phone_num: user.phone_num,
-    address: user.address,
-    spec_address: user.spec_address,
-    agreedTerms: terms,
-    preferredFoods: foods,
+    name: user.name,
+    agreedTerms: agreedTerms,
+    preferCategory: preferFoods,
   };
 };
 
@@ -40,4 +37,29 @@ export const bodyToUserMission = (memberId, missionId, body) => {
 
 export const responseFromUserMission = (body) => {
   return body;
+};
+
+export const responseFromMemberReview = (reviews) => {
+  return {
+    data: reviews,
+    pagination: {
+      cursor: reviews.length ? reviews[reviews.length - 1].id : null,
+    },
+  };
+};
+
+export const responseFromMemberMission = (missions) => {
+  return {
+    data: missions,
+    pagination: {
+      cursor: missions.length ? missions[missions.length - 1].id : null,
+    },
+  };
+};
+
+export const responseFromMissionStatus = (updated) => {
+  return {
+    id: updated.id,
+    status: updated.status,
+  };
 };

@@ -1,195 +1,171 @@
-import { pool } from "../db.config.js";
+import { pool, prisma } from "../db.config.js";
 
 //User 데이터 삽입
 export const addUser = async (data) => {
-  const conn = await pool.getConnection();
-
-  try {
-    const [confirm] = await pool.query(
-      `SELECT EXISTS(SELECT 1 FROM member WHERE email = ?) as isExistEmail;`,
-      data.email
-    );
-
-    if (confirm[0].isExistEmail) {
-      return null;
-    }
-
-    const [result] = await pool.query(
-      `INSERT INTO member (name, email, gender, birth, phone_num, address, spec_address) VALUES (?, ?, ?, ?, ?, ?, ?);`,
-      [
-        data.name,
-        data.email,
-        data.gender,
-        data.birth,
-        data.phone_num,
-        data.address,
-        data.spec_address,
-      ]
-    );
-
-    return result.insertId;
-  } catch (err) {
-    throw new Error(
-      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
-    );
-  } finally {
-    conn.release();
+  const user = await prisma.member.findFirst({ where: { email: data.email } });
+  if (user) {
+    return null;
   }
+
+  const created = await prisma.member.create({ data: data });
+  return created.id;
 };
 
 //사용자 정보 얻기
 export const getUser = async (userId) => {
-  const conn = await pool.getConnection();
-
-  try {
-    const [user] = await pool.query(
-      `SELECT * FROM member WHERE id = ?;`,
-      userId
-    );
-
-    console.log(user);
-
-    if (user.length == 0) {
-      return null;
-    }
-
-    return user[0];
-  } catch (err) {
-    throw new Error(`오류가 발생했어요. 요청 파라미터를 확인해주세요. ${err}`);
-  } finally {
-    conn.release();
-  }
+  const user = await prisma.member.findFirstOrThrow({ where: { id: userId } });
+  return user;
 };
 
 // 이용약관 동의 매핑
 export const setAgreedTerms = async (userId, termsId) => {
-  const conn = await pool.getConnection();
-
-  try {
-    await pool.query(
-      `INSERT INTO member_terms (member_id, terms_id) VALUES (?, ?);`,
-      [userId, termsId]
-    );
-
-    return;
-  } catch (err) {
-    throw new Error(
-      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
-    );
-  } finally {
-    conn.release();
-  }
+  await prisma.memberTerms.create({
+    data: {
+      memberId: userId,
+      termsId: termsId,
+    },
+  });
 };
 
 // 사용자 이용약관 동의 반환
 export const getUserAgreedTermsByUserId = async (userId) => {
-  const conn = await pool.getConnection();
+  const agreedTerms = await prisma.memberTerms.findMany({
+    select: {
+      id: true,
+      memberId: true,
+      termsId: true,
+      terms: true,
+    },
+    where: { memberId: userId },
+    orderBy: { termsId: "asc" },
+  });
 
-  try {
-    const [terms] = await pool.query(
-      "SELECT mt.id, mt.member_id, mt.terms_id, t.title " +
-        "FROM member_terms mt join terms t on mt.terms_id = t.id " +
-        "WHERE mt.member_id = ? ORDER BY mt.terms_id ASC;",
-      userId
-    );
-
-    return terms;
-  } catch (err) {
-    throw new Error(
-      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
-    );
-  } finally {
-    conn.release();
-  }
+  return agreedTerms;
 };
 
 // 음식 선호 카테고리 매핑
 export const setPreferredFoods = async (userId, foodCategoryId) => {
-  const conn = await pool.getConnection();
-
-  try {
-    await pool.query(
-      `INSERT INTO member_food (member_id, food_category_id) VALUES (?, ?);`,
-      [userId, foodCategoryId]
-    );
-
-    return;
-  } catch (err) {
-    throw new Error(
-      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
-    );
-  } finally {
-    conn.release();
-  }
+  await prisma.memberFood.create({
+    data: {
+      memberId: userId,
+      foodCategoryId: foodCategoryId,
+    },
+  });
 };
 
 // 사용자 선호 카테고리 반환
 export const getUserPreferredFoodsByUserId = async (userId) => {
-  const conn = await pool.getConnection();
+  const preferences = await prisma.memberFood.findMany({
+    select: {
+      id: true,
+      memberId: true,
+      foodCategoryId: true,
+      foodCategory: true,
+    },
+    where: { memberId: userId },
+    orderBy: { foodCategoryId: "asc" },
+  });
 
-  try {
-    const [preferences] = await pool.query(
-      "SELECT mf.id, mf.member_id, mf.food_category_id, fc.name " +
-        "FROM member_food mf join food_category fc on mf.food_category_id = fc.id " +
-        "WHERE mf.member_id = ? ORDER BY mf.food_category_id ASC;",
-      userId
-    );
-    return preferences;
-  } catch (err) {
-    throw new Error(
-      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
-    );
-  } finally {
-    conn.release();
-  }
+  return preferences;
 };
 
 // 도전중인 미션 추가
 export const addUserMission = async (data) => {
-  const conn = await pool.getConnection();
-
-  try {
-    const [confirm] = await pool.query(
-      `SELECT EXISTS(SELECT 1 FROM member_mission WHERE member_id = ? AND mission_id = ?) as isExistProceedingMission;`,
-      [data.memberId, data.missionId]
-    );
-
-    if (confirm[0].isExistProceedingMission) {
-      return null;
-    }
-
-    const [result] = await pool.query(
-      `INSERT INTO member_mission (member_id, mission_id, status) VALUES (?, ?, 'ing');`,
-      [data.memberId, data.missionId]
-    );
-    return result.insertId;
-  } catch (err) {
-    throw new Error(
-      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
-    );
-  } finally {
-    conn.release();
+  const userMission = await prisma.memberMission.findFirst({
+    where: { memberId: data.memberId, missionId: data.missionId },
+  });
+  if (userMission) {
+    return null;
   }
+
+  const created = await prisma.memberMission.create({ data: data });
+  return created.id;
 };
 
 // 도전 중인 미션 정보 얻기
 export const getUserMission = async (memberMissionId) => {
-  const conn = await pool.getConnection();
+  const userMission = await prisma.memberMission.findFirstOrThrow({
+    where: { id: memberMissionId },
+  });
+  return userMission;
+};
 
-  try {
-    const [userMission] = await pool.query(
-      "SELECT mm.id, s.name AS Store_Name, m.body AS Mission_Body " +
-        "FROM member_mission mm join mission m on mm.mission_id = m.id join store s on m.store_id = s.id " +
-        "WHERE mm.id = ?",
-      memberMissionId
-    );
+export const getAllMemberReview = async (memberId, cursor) => {
+  const review = await prisma.review.findMany({
+    select: {
+      id: true,
+      body: true,
+      storeId: true,
+      memberId: true,
+      store: {
+        select: {
+          id: true,
+          name: true,
+          address: true,
+        },
+      },
+      member: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+    where: { memberId: memberId, id: { gt: cursor } },
+    orderBy: { id: "asc" },
+    take: 5,
+  });
 
-    return userMission;
-  } catch (err) {
-    throw new Error(
-      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
-    );
-  } finally {
-    conn.release();
+  return review;
+};
+
+export const getAllMemberMissionDone = async (memberId, cursor) => {
+  const mission = await prisma.memberMission.findMany({
+    select: {
+      id: true,
+      memberId: true,
+      missionId: true,
+      member: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+      mission: {
+        select: {
+          id: true,
+          point: true,
+          body: true,
+          deadline: true,
+        },
+      },
+    },
+    where: { memberId: memberId, status: false, id: { gt: cursor } },
+    orderBy: { id: "asc" },
+    take: 5,
+  });
+
+  return mission;
+};
+
+export const changeStatus = async (memberId, missionId) => {
+  const mission = await prisma.memberMission.findFirstOrThrow({
+    where: { memberId: memberId, missionId: missionId, status: false },
+  });
+  if (!mission) {
+    return null;
   }
+
+  const update = await prisma.memberMission.update({
+    where: {
+      memberId_missionId: {
+        memberId: memberId,
+        missionId: missionId,
+      },
+    },
+    data: { status: true },
+  });
+
+  return update;
 };

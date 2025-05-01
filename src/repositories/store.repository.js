@@ -1,76 +1,83 @@
-import { pool } from "../db.config.js";
+import { pool, prisma } from "../db.config.js";
 
+//가게 추가
 export const addStore = async (data) => {
-  const conn = await pool.getConnection();
-
-  console.log(data.regionId, data.name);
-
-  try {
-    const [confirm] = await pool.query(
-      `SELECT EXISTS (SELECT 1 FROM store WHERE region_id = ? AND name = ?) as isExistStore;`,
-      [data.regionId, data.name]
-    );
-
-    if (confirm[0].isExistStore) {
-      return null;
-    }
-
-    const [result] = await pool.query(
-      `INSERT INTO store (region_id, name, address) VALUES (?, ?, ?);`,
-      [data.regionId, data.name, data.address]
-    );
-
-    return result.insertId;
-  } catch (err) {
-    throw new Error(
-      `오류가 발생헀어요. 요청 파라미터를 확인해주세요. (${err})`
-    );
-  } finally {
-    conn.release();
+  const store = await prisma.store.findFirst({
+    where: { regionId: data.regionId, name: data.name },
+  });
+  if (store) {
+    return null;
   }
+
+  const created = await prisma.store.create({ data: data });
+  return created.id;
 };
 
 export const getRegionIdByRegionName = async (regionName) => {
-  const conn = await pool.getConnection();
+  const region = await prisma.region.findFirst({
+    select: {
+      id: true,
+    },
+    where: { name: regionName },
+  });
 
-  try {
-    const [region] = await pool.query(
-      `SELECT * FROM region where name = ?;`,
-      regionName
-    );
-
-    console.log(region);
-    return region[0].id;
-  } catch (err) {
-    throw new Error(
-      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
-    );
-  } finally {
-    conn.release();
-  }
+  return region?.id;
 };
 
 export const getStore = async (storeId) => {
-  const conn = await pool.getConnection();
+  const store = await prisma.store.findFirstOrThrow({ where: { id: storeId } });
+  return store;
+};
 
-  try {
-    const [store] = await pool.query(
-      `SELECT * FROM store WHERE id = ?;`,
-      storeId
-    );
+export const getAllStoreReviews = async (storeId, cursor) => {
+  const reviews = await prisma.review.findMany({
+    select: {
+      id: true,
+      body: true,
+      storeId: true,
+      memberId: true,
+      store: {
+        select: {
+          id: true,
+          name: true,
+          address: true,
+        },
+      },
+      member: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+        },
+      },
+    },
+    where: { storeId: storeId, id: { gt: cursor } },
+    orderBy: { id: "asc" },
+    take: 5,
+  });
 
-    console.log(store);
+  return reviews;
+};
 
-    if (store.length == 0) {
-      return null;
-    }
+export const getAllStoreMissions = async (storeId, cursor) => {
+  const missions = await prisma.mission.findMany({
+    select: {
+      id: true,
+      point: true,
+      deadline: true,
+      body: true,
+      store: {
+        select: {
+          id: true,
+          name: true,
+          address: true,
+        },
+      },
+    },
+    where: { storeId: storeId, id: { gt: cursor } },
+    orderBy: { id: "asc" },
+    take: 5,
+  });
 
-    return store;
-  } catch (err) {
-    throw new Error(
-      `오류가 발생했어요. 요청 파라미터를 확인해주세요. (${err})`
-    );
-  } finally {
-    conn.release();
-  }
+  return missions;
 };

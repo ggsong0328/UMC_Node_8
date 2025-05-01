@@ -1,0 +1,158 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  남자
+  여자
+  해당_없음
+}
+
+model Member {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(45)
+  email        String   @unique(map: "email") @db.VarChar(50)
+  gender       Gender
+  birth        DateTime @db.Date
+  phone_num    String   @db.VarChar(13)
+  address      String   @db.VarChar(255)
+  spec_address String?  @map("spec_address")
+
+  memberTerms   MemberTerms[]
+  memberFood    MemberFood[]
+  review        Review[]
+  memberMission MemberMission[]
+
+  @@map("member")
+}
+
+model Terms {
+  id       Int     @id @default(autoincrement())
+  title    String  @db.VarChar(30)
+  body     String? @db.Text
+  optional Boolean @db.TinyInt
+
+  memberTerms MemberTerms[]
+
+  @@map("terms")
+}
+
+model MemberTerms {
+  id       Int    @id @default(autoincrement())
+  member   Member @relation(fields: [memberId], references: [id])
+  memberId Int    @map("member_id")
+  terms    Terms  @relation(fields: [termsId], references: [id])
+  termsId  Int    @map("terms_id")
+
+  @@index([termsId], map: "terms_id")
+  @@index([memberId], map: "member_id")
+  @@map("member_terms")
+}
+
+model FoodCategory {
+  id   Int     @id @default(autoincrement())
+  name String  @db.VarChar(10)
+  desc String? @db.VarChar(10)
+
+  memberFood MemberFood[]
+
+  @@map("food_category")
+}
+
+model MemberFood {
+  id             Int          @id @default(autoincrement())
+  member         Member       @relation(fields: [memberId], references: [id])
+  memberId       Int          @map("member_id")
+  foodCategory   FoodCategory @relation(fields: [foodCategoryId], references: [id])
+  foodCategoryId Int          @map("food_category_id")
+
+  @@index([foodCategoryId], map: "food_category_id")
+  @@index([memberId], map: "member_id")
+  @@map("member_food")
+}
+
+model Region {
+  id         Int       @id @default(autoincrement())
+  name       String    @db.VarChar(45)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now()) @updatedAt
+  Store      Store[]
+
+  @@map("region")
+}
+
+model Store {
+  id         Int       @id @default(autoincrement())
+  region     Region    @relation(fields: [regionId], references: [id])
+  regionId   Int       @map("region_id")
+  name       String    @db.VarChar(45)
+  address    String    @db.VarChar(122)
+  rating     Float?    @default(0.0)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now()) @updatedAt
+
+  review  Review[]
+  mission Mission[]
+
+  @@index([regionId], map: "region_id")
+  @@map("store")
+}
+
+model Review {
+  id         Int       @id @default(autoincrement())
+  store      Store     @relation(fields: [storeId], references: [id])
+  storeId    Int       @map("store_id")
+  member     Member    @relation(fields: [memberId], references: [id])
+  memberId   Int       @map("member_id")
+  body       String    @db.Text
+  rating     Float
+  created_at DateTime? @default(now())
+  updated_at DateTime? @updatedAt
+
+  @@index([storeId], map: "store_id")
+  @@index([memberId], map: "member_id")
+  @@map("review")
+}
+
+model Mission {
+  id         Int       @id @default(autoincrement())
+  store      Store     @relation(fields: [storeId], references: [id])
+  storeId    Int       @map("store_id")
+  point      Int?      @default(500)
+  deadline   DateTime
+  body       String    @db.VarChar(50)
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now()) @updatedAt
+
+  memberMission MemberMission[]
+
+  @@index([storeId], map: "store_id")
+  @@map("mission")
+}
+
+model MemberMission {
+  id         Int       @id @default(autoincrement())
+  member     Member    @relation(fields: [memberId], references: [id])
+  memberId   Int       @map("member_id")
+  mission    Mission   @relation(fields: [missionId], references: [id])
+  missionId  Int       @map("mission_id")
+  status     Boolean?  @default(false) @db.TinyInt
+  created_at DateTime? @default(now())
+  updated_at DateTime? @default(now()) @updatedAt
+
+  @@unique([memberId, missionId])
+  @@index([memberId], map: "member_id")
+  @@index([missionId], map: "mission_id")
+  @@map("member_mission")
+}

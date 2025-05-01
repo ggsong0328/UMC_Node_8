@@ -1,4 +1,10 @@
-import { responseFromUser, responseFromUserMission } from "../dtos/user.dto.js";
+import {
+  responseFromMemberMission,
+  responseFromMemberReview,
+  responseFromMissionStatus,
+  responseFromUser,
+  responseFromUserMission,
+} from "../dtos/user.dto.js";
 import {
   addUser,
   getUser,
@@ -8,6 +14,9 @@ import {
   setPreferredFoods,
   addUserMission,
   getUserMission,
+  getAllMemberReview,
+  getAllMemberMissionDone,
+  changeStatus,
 } from "../repositories/user.repository.js";
 
 export const userSignUp = async (data) => {
@@ -43,8 +52,8 @@ export const userSignUp = async (data) => {
 export const addNewUserMission = async (data) => {
   console.log(data.memberId, data.missionId);
   const joinUserMissionId = await addUserMission({
-    memberId: data.memberId,
-    missionId: data.missionId,
+    memberId: Number(data.memberId),
+    missionId: Number(data.missionId),
   });
 
   if (joinUserMissionId === null) {
@@ -54,4 +63,19 @@ export const addNewUserMission = async (data) => {
   const userMission = await getUserMission(joinUserMissionId);
 
   return responseFromUserMission({ userMission });
+};
+
+export const listMemberReviews = async (memberId) => {
+  const reviews = await getAllMemberReview(memberId);
+  return responseFromMemberReview(reviews);
+};
+
+export const listMemberMissions = async (memberId) => {
+  const missions = await getAllMemberMissionDone(memberId);
+  return responseFromMemberMission(missions);
+};
+
+export const changeMissionStatus = async (memberId, missionId) => {
+  const mission = await changeStatus(memberId, missionId);
+  return responseFromMissionStatus(mission);
 };

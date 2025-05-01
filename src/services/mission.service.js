@@ -3,7 +3,7 @@ import { addMission, getMission } from "../repositories/mission.repository.js";
 
 export const createMission = async (data) => {
   const joinMissionId = await addMission({
-    storeId: data.storeId,
+    storeId: Number(data.storeId),
     point: data.point,
     body: data.body,
     deadline: data.deadline,

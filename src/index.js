@@ -3,9 +3,16 @@ import cors from "cors";
 import express from "express"; // -> ES Module
 import {
   handleAddUserMission,
+  handleChangeMissionStatus,
+  handleMemberMissionsDone,
+  handleMemberReviews,
   handleUserSignUp,
 } from "./controllers/user.controller.js";
-import { handleCreateStore } from "./controllers/store.controller.js";
+import {
+  handleCreateStore,
+  handleStoreMissions,
+  handleStoreReviews,
+} from "./controllers/store.controller.js";
 import { handleCreateReview } from "./controllers/review.controller.js";
 import { handleCreateMission } from "./controllers/mission.controller.js";
 
@@ -37,6 +44,21 @@ app.post("/stores/:storeId/missions", handleCreateMission);
 
 // 가게의 미션을 도전 중인 미션에 추가
 app.post("/members/:memberId/missions/:missionId", handleAddUserMission);
+
+// 가게 리뷰 목록 보기
+app.get("/stores/:storeId/reviews", handleStoreReviews);
+
+// 내가 작성한 리뷰 목록
+app.get("/members/:memberId/reviews", handleMemberReviews);
+
+// 특정 가게의 미션 목록
+app.get("/stores/:storeId/missions", handleStoreMissions);
+
+// 내가 수행중인 미션 목록
+app.get("/members/:memberId/missions/done", handleMemberMissionsDone);
+
+// 진행 중인 미션 진행 완료로 바꾸기
+app.patch("/members/:memberId/missions/:missionId", handleChangeMissionStatus);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
