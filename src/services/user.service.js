@@ -6,6 +6,10 @@ import {
   responseFromUserMission,
 } from "../dtos/user.dto.js";
 import {
+  DuplicateUserEmailError,
+  UnderwayUserMissionError,
+} from "../errors.js";
+import {
   addUser,
   getUser,
   getUserAgreedTermsByUserId,
@@ -31,7 +35,7 @@ export const userSignUp = async (data) => {
   });
 
   if (joinUserId === null) {
-    throw new Error("이미 존재하는 이메일입니다.");
+    throw new DuplicateUserEmailError("이미 존재하는 이메일입니다.", data);
   }
 
   for (const term of data.agreedTerms) {
@@ -57,7 +61,7 @@ export const addNewUserMission = async (data) => {
   });
 
   if (joinUserMissionId === null) {
-    throw new Error("이미 도전중인 미션입니다.");
+    throw new UnderwayUserMissionError("이미 진행중인 미션입니다.", data);
   }
 
   const userMission = await getUserMission(joinUserMissionId);

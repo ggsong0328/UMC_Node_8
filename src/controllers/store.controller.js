@@ -11,7 +11,7 @@ export const handleCreateStore = async (req, res, next) => {
   console.log("body: ", req.body);
 
   const store = await createStore(bodyToStore(req.body));
-  res.status(StatusCodes.OK).json({ result: store });
+  res.status(StatusCodes.OK).success(store);
 };
 
 export const handleStoreReviews = async (req, res, next) => {
@@ -20,7 +20,7 @@ export const handleStoreReviews = async (req, res, next) => {
     parseInt(req.params.storeId),
     typeof req.query.cursor === "string" ? parseInt(req.query.cursor) : 0
   );
-  res.status(StatusCodes.OK).json(reviews);
+  res.status(StatusCodes.OK).success(reviews);
 };
 
 export const handleStoreMissions = async (req, res, next) => {
@@ -29,5 +29,5 @@ export const handleStoreMissions = async (req, res, next) => {
     parseInt(req.params.storeId),
     typeof req.query.cursor === "string" ? parseInt(req.query.cursor) : 0
   );
-  res.status(StatusCodes.OK).json(missions);
+  res.status(StatusCodes.OK).success(missions);
 };

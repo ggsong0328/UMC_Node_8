@@ -13,7 +13,7 @@ export const handleUserSignUp = async (req, res, next) => {
   console.log("body:", req.body);
 
   const user = await userSignUp(bodyToUser(req.body));
-  res.status(StatusCodes.OK).json({ result: user });
+  res.status(StatusCodes.OK).success(user);
 };
 
 export const handleAddUserMission = async (req, res, next) => {
@@ -24,7 +24,7 @@ export const handleAddUserMission = async (req, res, next) => {
   const userMission = await addNewUserMission(
     bodyToUserMission(memberId, missionId)
   );
-  res.status(StatusCodes.OK).json({ result: userMission });
+  res.status(StatusCodes.OK).success(userMission);
 };
 
 export const handleMemberReviews = async (req, res, next) => {
@@ -33,7 +33,7 @@ export const handleMemberReviews = async (req, res, next) => {
     parseInt(req.params.memberId),
     typeof req.query.cursor === "string" ? parseInt(req.query.cursor) : 0
   );
-  res.status(StatusCodes.OK).json(reviews);
+  res.status(StatusCodes.OK).success(reviews);
 };
 
 export const handleMemberMissionsDone = async (req, res, next) => {
@@ -42,7 +42,7 @@ export const handleMemberMissionsDone = async (req, res, next) => {
     parseInt(req.params.memberId),
     typeof req.query.cursor === "string" ? parseInt(req.query.cursor) : 0
   );
-  res.status(StatusCodes.OK).json(missions);
+  res.status(StatusCodes.OK).success(missions);
 };
 
 export const handleChangeMissionStatus = async (req, res, next) => {
@@ -51,5 +51,5 @@ export const handleChangeMissionStatus = async (req, res, next) => {
     parseInt(req.params.memberId),
     parseInt(req.params.missionId)
   );
-  res.status(StatusCodes.OK).json(missions);
+  res.status(StatusCodes.OK).success(missions);
 };

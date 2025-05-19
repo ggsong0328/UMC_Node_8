@@ -1,4 +1,5 @@
 import { responseFromReview } from "../dtos/review.dto.js";
+import { StoreNotExists } from "../errors.js";
 import {
   addReview,
   getReview,
@@ -16,7 +17,7 @@ export const createReview = async (data) => {
   });
 
   if (joinReviewId === null) {
-    throw new Error("리뷰를 작성하려는 가게가 존재하지 않습니다.");
+    throw new StoreNotExists("리뷰하려는 가게가 존재하지 않습니다.", data);
   }
 
   const review = await getReview(joinReviewId);
