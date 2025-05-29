@@ -156,3 +156,12 @@ model MemberMission {
   @@index([missionId], map: "mission_id")
   @@map("member_mission")
 }
+
+model Session {
+  id        String   @id
+  sid       String   @unique
+  data      String   @db.Text
+  expiresAt DateTime @map("expires_at")
+
+  @@map("session")
+}

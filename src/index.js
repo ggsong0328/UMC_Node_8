@@ -17,8 +17,18 @@ import {
 } from "./controllers/store.controller.js";
 import { handleCreateReview } from "./controllers/review.controller.js";
 import { handleCreateMission } from "./controllers/mission.controller.js";
+import passport from "passport";
+import { PrismaSessionStore } from "@quixo3/prisma-session-store";
+import session from "express-session";
+import { googleStrategy, naverStrategy } from "./auth.config.js";
+import { prisma } from "./db.config.js";
 
 dotenv.config();
+
+passport.use(googleStrategy);
+passport.use(naverStrategy);
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
 
 const app = express();
 const port = process.env.PORT;
@@ -81,7 +91,50 @@ app.get("/openapi.json", async (req, res, next) => {
   res.json(result ? result.data : null);
 });
 
+app.use(
+  session({
+    cookie: {
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    },
+    resave: false,
+    saveUninitialized: false,
+    secret: process.env.EXPRESS_SESSION_SECRET,
+    store: new PrismaSessionStore(prisma, {
+      checkPeriod: 2 * 60 * 1000,
+      dbRecordIdIsSessionId: true,
+      dbRecordIdFunction: undefined,
+    }),
+  })
+);
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+//소셜 로그인 - 구글
+app.get("/oauth2/login/google", passport.authenticate("google"));
+app.get(
+  "/oauth2/callback/google",
+  passport.authenticate("google", {
+    failureRedirect: "/oauth2/login/google",
+    failureMessage: true,
+  }),
+  (req, res) => res.redirect("/profile/edit")
+);
+
+//소셜 로그인 - 네이버
+app.get("/oauth2/login/naver", passport.authenticate("naver"));
+app.get(
+  "/oauth2/callback/naver",
+  passport.authenticate("naver", {
+    failureRedirect: "/oauth2/login/google",
+    failureMessage: true,
+  }),
+  (req, res) => res.redirect("/profile/edit")
+);
+
 app.get("/", (req, res) => {
+  // #swagger.ignore = true
+  console.log(req.user);
   res.send("Hello World!");
 });
 
@@ -114,6 +167,28 @@ app.get("/members/:memberId/missions/done", handleMemberMissionsDone);
 
 // 진행 중인 미션 진행 완료로 바꾸기
 app.patch("/members/:memberId/missions/:missionId", handleChangeMissionStatus);
+
+// 사용자 정보 입력
+app.post("/members/update", async (req, res) => {
+  if (!req.isAuthenticated()) {
+    return res.redirect("/login");
+  }
+
+  const { gender, birth, phone_num, address, spec_address } = req.body;
+
+  await prisma.member.update({
+    where: { id: req.user.id },
+    data: {
+      gender,
+      birth: new Date(birth),
+      phone_num,
+      address,
+      spec_address,
+    },
+  });
+
+  res.redirect("/");
+});
 
 /**
  * 전역 오류를 처리하기 위한 미들웨어
