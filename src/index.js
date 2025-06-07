@@ -129,7 +129,7 @@ app.get(
     failureRedirect: "/oauth2/login/google",
     failureMessage: true,
   }),
-  (req, res) => res.redirect("/profile/edit")
+  (req, res) => res.redirect("/")
 );
 
 app.get("/", (req, res) => {
