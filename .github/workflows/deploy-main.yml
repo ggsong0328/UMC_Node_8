@@ -26,6 +26,8 @@ jobs:
             User $EC2_USER
             IdentityFile ~/.ssh/id_rsa
             StrictHostKeyChecking no
+            ServerAliveInterval 60
+            ServerAliveCountMax 5
           END
         env:
           EC2_USER: ubuntu
@@ -45,7 +47,7 @@ jobs:
         run: |
           ssh playground-umc-8th '
             cd /opt/app &&
-            npm install &&
+            npm install --no-audit --no-fund &&
             npx prisma generate
           '
 
@@ -62,8 +64,8 @@ jobs:
             Restart=always
             WorkingDirectory=/opt/app
             Environment=NODE_ENV=production
-            StandardOutput=inherit
-            StandardError=inherit
+            StandardOutput=journal
+            StandardError=journal
 
             [Install]
             WantedBy=multi-user.target" | sudo tee /etc/systemd/system/app.service > /dev/null
