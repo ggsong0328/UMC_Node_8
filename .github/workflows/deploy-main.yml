@@ -43,11 +43,11 @@ jobs:
         run: |
           scp -r . playground-umc-8th:/opt/app
 
-      - name: Upload .env to EC2
+      - name: Upload .env file to EC2
         run: |
           echo "${{ secrets.ENV_FILE_CONTENT }}" | ssh playground-umc-8th "cat > /opt/app/.env"
 
-      - name: Install dependencies & generate Prisma client
+      - name: Install dependencies and generate Prisma client
         run: |
           ssh playground-umc-8th '
             cd /opt/app &&
@@ -65,9 +65,9 @@ jobs:
             [Service]
             User=ubuntu
             WorkingDirectory=/opt/app
-            EnvironmentFile=/opt/app/.env
             ExecStart=/usr/bin/npm run start --prefix /opt/app
             Restart=always
+            EnvironmentFile=/opt/app/.env
             StandardOutput=journal
             StandardError=journal
 
