@@ -41,7 +41,7 @@ jobs:
 
       - name: Upload app source to EC2
         run: |
-          scp -r . playground-umc-8th:/opt/app
+          rsync -avz --exclude '.git' . playground-umc-8th:/opt/app
 
       - name: Upload .env file to EC2
         run: |
