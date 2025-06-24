@@ -64,10 +64,10 @@ jobs:
 
             [Service]
             User=ubuntu
+            WorkingDirectory=/opt/app
+            EnvironmentFile=/opt/app/.env
             ExecStart=/usr/bin/npm run start --prefix /opt/app
             Restart=always
-            WorkingDirectory=/opt/app
-            Environment=NODE_ENV=production
             StandardOutput=journal
             StandardError=journal
 
